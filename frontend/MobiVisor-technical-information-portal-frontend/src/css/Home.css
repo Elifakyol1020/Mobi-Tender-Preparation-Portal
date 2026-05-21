@@ -1,0 +1,137 @@
+.home-container {
+    background-image: url('../image/back.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    min-height: 100vh;
+    min-width: 100vw;
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow: hidden !important;
+}
+
+.home-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: min(92vw, 560px);
+}
+
+.home-text h1 {
+    font-size: 40px;
+    color: white;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+}
+
+.home-text h2 {
+    color: white;
+    font-size: 25px;
+    font-family: 'Inter', sans-serif;
+    margin-bottom: 50px;
+}
+
+.auth-form {
+    width: min(92vw, 420px);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.94);
+    border-radius: 8px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.24);
+}
+
+.auth-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.auth-tabs button,
+.auth-switch {
+    border: 1px solid #d7dce8;
+    background: #fff;
+    color: #1f2430;
+    min-height: 42px;
+    border-radius: 6px;
+    font: 600 15px 'Inter', sans-serif;
+    cursor: pointer;
+}
+
+.auth-tabs button.active {
+    background: #FF9F1C;
+    border-color: #FF9F1C;
+    color: #fff;
+}
+
+.auth-form input {
+    width: 100%;
+    min-height: 46px;
+    box-sizing: border-box;
+    border: 1px solid #cfd6e4;
+    border-radius: 6px;
+    padding: 0 14px;
+    font: 15px 'Inter', sans-serif;
+    color: #1f2430;
+}
+
+.auth-error {
+    margin: 0;
+    color: #b42318;
+    font: 600 14px 'Inter', sans-serif;
+}
+
+.home-button {
+    border: 0;
+    background-color: #1f2430;
+    padding: 14px 24px;
+    font-size: 18px;
+    border-radius: 6px;
+    text-decoration: none;
+    cursor: pointer;
+    color: white;
+    font-family: 'Inter', sans-serif;
+}
+
+.home-button:hover {
+    background-color: #FF9F1C;
+    color: white;
+}
+
+.home-button:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+.auth-switch {
+    background: transparent;
+}
+
+.lang-toggle-btn {
+    position: absolute;
+    top: 24px;
+    right: 60px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #fff;
+    color: #222;
+    border: 1.5px solid #ccc;
+    font-weight: bold;
+    font-size: 1.1rem;
+    box-shadow: 0 2px 8px #0001;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 10;
+}
+
+.lang-toggle-btn:hover {
+    background: #f4f4f4;
+    border-color: #aaa;
+}

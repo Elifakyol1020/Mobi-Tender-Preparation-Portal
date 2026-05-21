@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: mobivisor-technical-info-portal
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/mobivisor?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: ${SPRING_DATASOURCE_USERNAME:user}
+    password: ${SPRING_DATASOURCE_PASSWORD:password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        open-in-view: false
+
+  elasticsearch:
+    rest:
+      uris: ${ELASTICSEARCH_URIS:http://elasticsearch:9200}
+    connection-timeout: 3s
+    socket-timeout: 10s
+
+server:
+  port: 8081
+
+jwt:
+  secret-key: ${JWT_SECRET_KEY:Qzlua2ZLVGNhR0xWRE44UFc0c1VqckVYR2t6MUp1VVA=}
+  expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:900000}
+  refresh-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:604800000}
+
+app:
+  admin:
+    email: ${APP_ADMIN_EMAIL:}
+    username: ${APP_ADMIN_USERNAME:Admin}
+    password: ${APP_ADMIN_PASSWORD:}
+  refresh-cookie:
+    secure: ${REFRESH_COOKIE_SECURE:false}
+    same-site: ${REFRESH_COOKIE_SAME_SITE:Lax}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:${APP_FRONTEND_URL:http://localhost:5173}}

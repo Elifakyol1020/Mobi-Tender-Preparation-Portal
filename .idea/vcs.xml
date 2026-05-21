@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/backend" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/backend/MobiVisor-technical-information-portal-backend" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/frontend" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/frontend/MobiVisor-technical-information-portal-frontend" vcs="Git" />
+  </component>
+</project>
