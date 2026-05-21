@@ -4,56 +4,9 @@ import '../css/Search.css';
 import logo from "../image/logo.png";
 import { useNavigate } from 'react-router-dom';
 
-
-
-const API_URL = import.meta.env.VITE_API_URL;
-
-const translations = {
-    EN: {
-        portalTitle: "Tender Preparation Portal",
-        searchPlaceholder: "Ask Anything...",
-        selected: "Selected",
-        detailsClick: "Click for details",
-        category: "Category",
-        article: "Article",
-        compatibility: "Compatibility",
-        comment: "Comment",
-        actions: "Actions",
-        logout: "Logout",
-        cancel: "Cancel",
-        save: "Save",
-        confirmDelete: "Are you sure you want to delete this item?",
-        yesDelete: "Yes, Delete",
-        close: "Close",
-        export: "Save",
-        specificationName: "Specification Name",
-        edit: "Edit",
-        download: "Download",
-        select: "Select",
-    },
-    TR: {
-        portalTitle: "Tender Preparation Portal",
-        searchPlaceholder: "Bir şeyler sor...",
-        selected: "Seçilenler",
-        detailsClick: "Detay için tıkla",
-        category: "Kategori",
-        article: "Madde",
-        compatibility: "Uyumluluk",
-        comment: "Yorum",
-        actions: "İşlemler",
-        logout: "Çıkış Yap",
-        cancel: "Vazgeç",
-        save: "Kaydet",
-        confirmDelete: "Bu öğeyi silmek istediğinize emin misiniz?",
-        yesDelete: "Evet, Sil",
-        close: "Kapat",
-        export: "Kaydet",
-        specificationName: "Şartname Adı",
-        edit: "Düzenle",
-        download: "İndir",
-        select: "Seçiniz",
-    }
-};
+import { API_BASE_URL } from "../config/env";
+import { searchTranslations } from "../constants/i18n";
+import { FaPen, FaPlus, FaSignOutAlt, FaUserShield } from "react-icons/fa";
 
 function Search() {
 
@@ -98,7 +51,7 @@ function Search() {
         }
         try {
             await axios.post(
-                `${API_URL}/api/v1/auth/logout`,
+                `${API_BASE_URL}/api/v1/auth/logout`,
                 {},
                 {
                     headers: {
@@ -132,7 +85,7 @@ function Search() {
         window.scrollTo({ top: 0, behavior: "smooth" });
         try {
             const token = localStorage.getItem("accessToken");
-            const response = await axios.get(`${API_URL}/api/v1/search/advanced`, {
+            const response = await axios.get(`${API_BASE_URL}/api/v1/search/advanced`, {
                 params: { keyword },
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -215,7 +168,7 @@ function Search() {
                 categoryId: editFields.categoryId ? Number(editFields.categoryId) : null
             };
             await axios.put(
-                `${API_URL}/api/v1/specification-items/${editingItem.id}`,
+                `${API_BASE_URL}/api/v1/specification-items/${editingItem.id}`,
                 payload,
                 {
                     headers: {
@@ -249,7 +202,7 @@ function Search() {
 
 
             const response = await axios.post(
-                `${API_URL}/api/v1/specification-items/export-selected`,
+                `${API_BASE_URL}/api/v1/specification-items/export-selected`,
                 payload,
                 {
                     headers: {
@@ -297,7 +250,7 @@ function Search() {
                 newSpecificationName: editFields.specificationName
             };
             await axios.post(
-                `${API_URL}/api/v1/specification-items/duplicate-and-export`,
+                `${API_BASE_URL}/api/v1/specification-items/duplicate-and-export`,
                 payload,
                 {
                     headers: {
@@ -325,7 +278,7 @@ function Search() {
     }, [keyword]);
 
     // Dili seçili olan objeden al
-    const t = translations[lang];
+    const t = searchTranslations[lang];
 
     const handleCloseModal = () => {
         setShowPreviewModal(false);
@@ -360,13 +313,13 @@ function Search() {
                             }}
                             onClick={() => navigate("/admin")}
                         >
-                            Admin
+                            <FaUserShield /> Admin
                         </button>
                     )}
                     <button className="lang-button" onClick={() => setLang(l => l === 'EN' ? 'TR' : 'EN')}>
                         {lang}
                     </button>
-                    <button onClick={handleLogout} className="logout-button">🔓 {t.logout}</button>
+                    <button onClick={handleLogout} className="logout-button"><FaSignOutAlt /> {t.logout}</button>
                 </div>
             </div>
 
@@ -455,8 +408,8 @@ function Search() {
                                     <td>{item.mobiComment}</td>
                                     <td>
                                         <div style={{ display: 'flex', gap: '8px' }}>
-                                            <button onClick={() => handleEdit(item.id)}>✏️</button>
-                                            <button onClick={() => handleAdd(item.id)}>➕</button>
+                                            <button onClick={() => handleEdit(item.id)} title={t.edit}><FaPen /></button>
+                                            <button onClick={() => handleAdd(item.id)} title={t.select}><FaPlus /></button>
                                         </div>
                                     </td>
                                 </tr>

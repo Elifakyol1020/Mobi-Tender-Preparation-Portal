@@ -1,58 +1,84 @@
 .header-banner {
-    position: absolute;
-    top: 50px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 900px;
-    height: 100px;
-    background: #fff;
-    border: 1px solid rgba(0, 0, 0, 0.4);
-    border-radius: 50px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    min-height: 72px;
+    background: rgba(255, 255, 255, 0.92);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    backdrop-filter: blur(16px);
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding-left: 0;
-    z-index: 10;
-    margin-bottom: 24px;
+    justify-content: space-between;
+    padding: 0 44px;
+    z-index: 20;
+    box-sizing: border-box;
+}
+
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: 18px;
 }
 
 .mobivisor-logo {
-    width: 200px;
-    height: 50px;
+    width: 158px;
+    height: 42px;
     object-fit: contain;
-    margin-right: 40px;
 }
 
 .portal-title {
-    font-family: 'Franklin Gothic Demi Cond', 'Arial Narrow', Arial, sans-serif;
-    font-size: 40px;
-    color: #000134;
-    font-weight: 400;
-    line-height: 55px;
-    letter-spacing: 1px;
+    font-family: Inter, Arial, sans-serif;
+    font-size: 16px;
+    color: #111827;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-lang-button {
+    min-width: 44px;
+    height: 38px;
+    border-radius: 6px;
+    border: 1px solid #d7dce5;
+    background: #ffffff;
+    color: #1f2937;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.header-action-button {
+    min-height: 40px;
+    border: 0;
+    border-radius: 6px;
+    padding: 0 18px;
+    background: #111827;
+    color: #ffffff;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.header-action-button:hover {
+    background: #cb6f08;
 }
 
 @media (max-width: 900px) {
     .header-banner {
-        width: 600px;
-        height: 60px;
-        min-width: 0;
-        max-width: 98vw;
-        left: 50%;
-        transform: translateX(-50%);
-        padding-left: 0;
-        padding-right: 0;
-        border-radius: 18px;
+        padding: 0 18px;
+        min-height: 64px;
     }
 
     .mobivisor-logo {
-        width: 100px;
-        height: 80px;
-        margin-right: 10px;
+        width: 120px;
+        height: 36px;
     }
 
     .portal-title {
-        font-size: 20px;
-        line-height: 20px;
+        display: none;
     }
 }

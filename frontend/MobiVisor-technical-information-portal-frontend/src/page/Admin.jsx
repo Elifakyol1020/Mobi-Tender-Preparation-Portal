@@ -3,144 +3,16 @@ import axios from "axios";
 import logo from "../image/logo.png";
 import "../css/Admin.css";
 import { useNavigate } from "react-router-dom";
-import { FaUsers, FaFileAlt, FaUser, FaClipboardList } from "react-icons/fa";
+import { FaClipboardList, FaDownload, FaEdit, FaFileAlt, FaFolderOpen, FaPlus, FaSearch, FaSignOutAlt, FaTrash, FaUpload, FaUser, FaUsers } from "react-icons/fa";
+import { API_BASE_URL } from "../config/env";
+import { adminTranslations } from "../constants/i18n";
 
 function formatDate(dateStr) {
   if (!dateStr) return "";
   return dateStr.replace("T", " ").slice(0, 19);
 }
 
-const translations = {
-  EN: {
-    adminTitle: "Tender Preparation Portal Admin Panel",
-    search: "Search",
-    logout: "Logout",
-    specifications: "Specifications",
-    users: "Users",
-    upload: "Upload",
-    noSpec: "No specification found.",
-    articleCount: "article",
-    download: "Download",
-    delete: "Delete",
-    areYouSure: "Are you sure you want to delete?",
-    cancel: "Cancel",
-    save: "Save",
-    yesDelete: "Yes, Delete",
-    category: "Category",
-    article: "Article",
-    compatibility: "Compatibility",
-    comment: "Comment",
-    actions: "Actions",
-    edit: "Edit",
-    clearSearch: "Clear Search",
-    searchPlaceholder: "Search...",
-    noUsers: "No users found.",
-    add: "Add",
-    email: "Email",
-    username: "Username",
-    password: "Password",
-    role: "Role",
-    admin: "ADMIN",
-    user: "User",
-    editUser: "Edit User",
-    addUser: "Add User",
-    uploadTitle: "Upload",
-    uploadDesc: "The file you upload must be in the following format.",
-    clickDownload: "(click and download)",
-    select: "Select",
-    general: "General",
-    security: "Security",
-    management: "Management",
-    use: "Use",
-    reporting: "Reporting",
-    uygun: "Uygun",
-    kismenUygun: "Kısmen Uygun",
-    uygunDegil: "Uygun Değil",
-    selectedFile: "Selected file:",
-    loading: "Loading...",
-    failedLoad: "Users could not be loaded.",
-    failedAdd: "User could not be added.",
-    failedUpdate: "User could not be updated.",
-    failedDelete: "User could not be deleted.",
-    failedEdit: "Edit failed.",
-    failedUpload: "Upload failed.",
-    successUpload: "Upload successful!",
-    successDelete: "Specification deleted.",
-    deleteSpecConfirm: 'Are you sure you want to delete the specification named',
-    continue: "Continue",
-    authenticationLogs: "Authentication Logs",
-    noLogs: "No logs found.",
-    dt: "Date/Time",
-    clearLogs: "Clear All Logs",
-    clearLogsConfirm: "Are you sure you want to delete all logs?",
-
-  },
-  TR: {
-    adminTitle: "Tender Preparation Portal Admin Panel",
-    search: "Ara",
-    logout: "Çıkış",
-    specifications: "Şartnameler",
-    users: "Kullanıcılar",
-    upload: "Yükle",
-    noSpec: "Şartname bulunamadı.",
-    articleCount: "madde",
-    download: "İndir",
-    delete: "Sil",
-    areYouSure: "Silmek istediğinize emin misiniz?",
-    cancel: "İptal",
-    save: "Kaydet",
-    yesDelete: "Evet, Sil",
-    category: "Kategori",
-    article: "Madde",
-    compatibility: "Uyumluluk",
-    comment: "Yorum",
-    actions: "İşlemler",
-    edit: "Düzenle",
-    clearSearch: "Aramayı Temizle",
-    searchPlaceholder: "Ara...",
-    noUsers: "Kullanıcı bulunamadı.",
-    add: "Ekle",
-    email: "E-posta",
-    username: "Kullanıcı Adı",
-    password: "Şifre",
-    role: "Rol",
-    admin: "YÖNETİCİ",
-    user: "Kullanıcı",
-    editUser: "Kullanıcıyı Düzenle",
-    addUser: "Kullanıcı Ekle",
-    uploadTitle: "Yükle",
-    uploadDesc: "Yükleyeceğiniz dosya aşağıdaki formatta olmalı.",
-    clickDownload: "(tıkla ve indir)",
-    select: "Seç",
-    general: "Genel",
-    security: "Güvenlik",
-    management: "Yönetim",
-    use: "Kullanım",
-    reporting: "Raporlama",
-    uygun: "Uygun",
-    kismenUygun: "Kısmen Uygun",
-    uygunDegil: "Uygun Değil",
-    selectedFile: "Seçilen dosya:",
-    loading: "Yükleniyor...",
-    failedLoad: "Kullanıcılar alınamadı.",
-    failedAdd: "Kullanıcı eklenemedi.",
-    failedUpdate: "Kullanıcı güncellenemedi.",
-    failedDelete: "Kullanıcı silinemedi.",
-    failedEdit: "Düzenleme hatası.",
-    failedUpload: "Yükleme hatası.",
-    successUpload: "Yükleme başarılı!",
-    successDelete: "Şartname silindi.",
-    deleteSpecConfirm: 'Aşağıdaki isimli şartnameyi silmek istediğine emin misin',
-    continue: "Devam Et",
-    authenticationLogs: "Kimlik Doğrulama Kayıtları",
-    noLogs: "Kayıtlı log bulunamadı.",
-    dt: "Tarih/Saat",
-    clearLogs: "Tüm Logları Temizle",
-    clearLogsConfirm: "Tüm logları silmek istediğine emin misin?",
-  }
-};
-
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = API_BASE_URL;
 const PAGE_SIZE = 4;
 const DETAIL_PAGE_SIZE = 20;
 
@@ -148,7 +20,7 @@ function Admin() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("specifications");
   const [lang, setLang] = useState("EN");
-  const t = translations[lang];
+  const t = adminTranslations[lang];
 
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -784,7 +656,7 @@ const clearElastic = () => {
             {lang}
           </button>
           <button onClick={handleLogout} className="admin-logout-button">
-            🔓 {t.logout}
+            <FaSignOutAlt /> {t.logout}
           </button>
         </div>
       </header>
@@ -862,9 +734,9 @@ const clearElastic = () => {
         {activeTab === "specifications" && (
           <>
             <div className="spec-heading-row">
-              <h2 className="spec-heading">📁 {t.specifications}</h2>
+              <h2 className="spec-heading"><FaFolderOpen /> {t.specifications}</h2>
               <button className="upload-btn" onClick={handleOpenUploadModal}>
-                ⬆️ {t.upload}
+                <FaUpload /> {t.upload}
               </button>
             </div>
             <ul className="spec-list">
@@ -917,7 +789,7 @@ const clearElastic = () => {
                         style={{ marginLeft: 0 }}
                         title={t.download}
                       >
-                        ⬇️
+                        <FaDownload />
                       </button>
                       <button
                         onClick={e => { e.stopPropagation(); handleDeleteSpec(spec.id, spec.specificationName); }}
@@ -925,7 +797,7 @@ const clearElastic = () => {
                         style={{ marginLeft: 0 }}
                         title={t.delete}
                       >
-                        🗑️
+                        <FaTrash />
                       </button>
                     </div>
                   </li>
@@ -965,7 +837,7 @@ const clearElastic = () => {
                   marginBottom: 14
                 }}>
                   <h4 className="spec-table-heading" style={{ margin: 0, padding: 0 }}>
-                    📁 {selectedSpecName}
+                    <FaFolderOpen /> {selectedSpecName}
                   </h4>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <input
@@ -1039,8 +911,8 @@ const clearElastic = () => {
                         <td>{spec.suitability}</td>
                         <td>{spec.mobiComment}</td>
                         <td>
-                          <button onClick={() => handleEdit(spec.id)} className="action-button edit">✏️</button>
-                          <button onClick={() => handleDeleteClick(spec.id)} className="action-button delete">🗑️</button>
+                          <button onClick={() => handleEdit(spec.id)} className="action-button edit" title={t.edit}><FaEdit /></button>
+                          <button onClick={() => handleDeleteClick(spec.id)} className="action-button delete" title={t.delete}><FaTrash /></button>
                         </td>
                       </tr>
                     ))}
@@ -1208,7 +1080,7 @@ const clearElastic = () => {
                       }}
                       onClick={() => handleEditUser(user)}
                     >
-                      <span style={{ fontSize: "1.08em" }}>✏️</span>
+                      <FaEdit />
                     </button>
                   </li>
                 ))}
