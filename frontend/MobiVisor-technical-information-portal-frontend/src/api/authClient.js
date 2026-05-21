@@ -11,6 +11,9 @@ const clearSession = () => {
 };
 
 const storeAuthTokens = (data) => {
+  if (!data?.accessToken) {
+    throw new Error("Access token response içinde yok");
+  }
   localStorage.setItem("accessToken", data.accessToken);
   localStorage.setItem("role", data.role);
 };

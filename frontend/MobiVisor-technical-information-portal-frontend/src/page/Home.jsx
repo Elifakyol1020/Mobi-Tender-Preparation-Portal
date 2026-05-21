@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+import axios from "axios";
 import Header from "../component/Header";
 import "../css/Home.css";
 import { clearSession, storeAuthTokens } from "../api/authClient";
@@ -45,7 +46,7 @@ function Home() {
   const [form, setForm] = useState({ email: "", username: "", password: "" });
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const { loadUserFromToken } = useAuth();
+  const { loadUserFromToken, setUser } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -104,24 +105,19 @@ function Home() {
       : { email: form.email, username: form.username, password: form.password };
 
     try {
-      const response = await fetch(`${API_URL}/api/v1/auth/${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(payload)
+      const response = await axios.post(`${API_URL}/api/v1/auth/${endpoint}`, payload, {
+        withCredentials: true,
+        headers: { "Content-Type": "application/json" }
       });
 
-      if (!response.ok) {
-        const message = await response.text();
-        throw new Error(message || t.error);
-      }
-
-      const data = await response.json();
+      const data = response.data;
       storeAuthTokens(data);
-      await loadUserFromToken();
+      const decoded = jwtDecode(data.accessToken);
+      setUser(decoded);
       redirectByRole(data.accessToken);
     } catch (err) {
-      setError(err.message || t.error);
+      const message = err.response?.data?.message || err.response?.data || err.message;
+      setError(message || t.error);
     } finally {
       setSubmitting(false);
     }
