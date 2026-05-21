@@ -54,7 +54,7 @@ public class CategoryController {
     }
 
     // Bu method ID'ye göre bir kategoriyi getirmek için kullanılır.
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping("/{id}")
     public ResponseEntity<CategoryResponse> getCategoryById(@PathVariable Long id) {
         logger.info("ID'ye göre kategori getirme isteği alındı. ID: {}", id);
@@ -63,7 +63,7 @@ public class CategoryController {
     }
 
     // Bu method tüm kategorileri listelemek için kullanılır.
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping
     public ResponseEntity<List<CategoryResponse>> getAllCategories() {
         logger.info("Tüm kategorileri getirme isteği alındı");

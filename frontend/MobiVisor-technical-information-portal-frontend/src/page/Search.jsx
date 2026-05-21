@@ -1,48 +1,102 @@
-import React, { useState, useRef } from 'react';
-import axios from 'axios';
-import '../css/Search.css';
+import { useEffect, useMemo, useState } from "react";
+import axios from "axios";
+import "../css/Search.css";
 import logo from "../image/logo.png";
-import { useNavigate } from 'react-router-dom';
-
+import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config/env";
 import { searchTranslations } from "../constants/i18n";
-import { FaPen, FaPlus, FaSignOutAlt, FaUserShield } from "react-icons/fa";
+import {
+    FaDownload,
+    FaEdit,
+    FaPlus,
+    FaSearch,
+    FaSignOutAlt,
+    FaTimes,
+    FaUserShield,
+} from "react-icons/fa";
+
+const PAGE_SIZE = 10;
 
 function Search() {
-
-
-
-    const categoryOptions = [
-        { value: "1", label: "General" },
-        { value: "2", label: "Security" },
-        { value: "3", label: "Management" },
-        { value: "4", label: "Use" },
-        { value: "5", label: "Reporting" },
-    ];
-
-    const [keyword, setKeyword] = useState('');
-    const [results, setResults] = useState([]);
+    const [lang, setLang] = useState("EN");
+    const [items, setItems] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [keyword, setKeyword] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [loading, setLoading] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
-    const [lang, setLang] = useState('EN');
-
+    const [selectedRows, setSelectedRows] = useState([]);
+    const [showPreviewModal, setShowPreviewModal] = useState(false);
+    const [exportName, setExportName] = useState("");
     const [editFields, setEditFields] = useState({
-        categoryId: '',
-        categoryName: '',
-        article: '',
-        suitability: '',
-        mobiComment: '',
-        specificationId: '',
-        specificationName: ''
+        categoryId: "",
+        article: "",
+        suitability: "",
+        mobiComment: "",
+        specificationId: "",
     });
 
-
-    const role = localStorage.getItem("role");
-    console.log("Current role:", role);
-
-    const textareaRef = useRef();
-
     const navigate = useNavigate();
+    const role = localStorage.getItem("role");
+    const t = searchTranslations[lang];
+
+    useEffect(() => {
+        fetchInitialData();
+    }, []);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [keyword]);
+
+    const authHeaders = () => ({
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+    });
+
+    const fetchInitialData = async () => {
+        setLoading(true);
+        try {
+            const [itemsResponse, categoriesResponse] = await Promise.all([
+                axios.get(`${API_BASE_URL}/api/v1/specification-items`, { headers: authHeaders() }),
+                axios.get(`${API_BASE_URL}/api/categories`, { headers: authHeaders() }),
+            ]);
+            setItems(itemsResponse.data || []);
+            setCategories(categoriesResponse.data || []);
+        } catch (error) {
+            setItems([]);
+            setCategories([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const filteredItems = useMemo(() => {
+        const query = keyword.trim().toLowerCase();
+        if (!query) return items;
+        return items.filter((item) =>
+            [
+                item.article,
+                item.suitability,
+                item.mobiComment,
+                item.specificationName,
+                item.categoryName,
+            ]
+                .filter(Boolean)
+                .some((value) => value.toLowerCase().includes(query))
+        );
+    }, [items, keyword]);
+
+    const totalPages = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE));
+    const paginatedItems = filteredItems.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+    const getSuitabilityClass = (suitability = "") => {
+        const value = suitability.toLowerCase();
+        if (value.includes("uygun değil")) return "danger";
+        if (value.includes("kısmen uygun")) return "warning";
+        if (value.includes("uygun")) return "success";
+        return "neutral";
+    };
+
     const handleLogout = async () => {
         const token = localStorage.getItem("accessToken");
         if (!token) {
@@ -50,423 +104,215 @@ function Search() {
             return;
         }
         try {
-            await axios.post(
-                `${API_BASE_URL}/api/v1/auth/logout`,
-                {},
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
-        } catch (error) {
-            console.warn("Logout isteği başarısız:", error.response?.data || error.message);
-        }
-        localStorage.removeItem("accessToken");
-        navigate("/");
-    };
-
-
-    // SEÇİLENLER için state:
-    const [selectedRows, setSelectedRows] = useState([]);
-    const [showPreviewModal, setShowPreviewModal] = useState(false);
-
-    // Otomatik büyüyen textarea fonksiyonu
-    const handleKeywordChange = (e) => {
-        setKeyword(e.target.value);
-        const ta = textareaRef.current;
-        if (ta) {
-            ta.style.height = "auto";
-            ta.style.height = ta.scrollHeight + "px";
+            await axios.post(`${API_BASE_URL}/api/v1/auth/logout`, {}, { headers: authHeaders() });
+        } finally {
+            localStorage.removeItem("accessToken");
+            navigate("/");
         }
     };
 
-    const handleClick = async () => {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-        try {
-            const token = localStorage.getItem("accessToken");
-            const response = await axios.get(`${API_BASE_URL}/api/v1/search/advanced`, {
-                params: { keyword },
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-            setResults(response.data);
-        } catch (error) {
-            setResults([]);
-        }
-    };
-
-    const getSuitabilityStyle = (suitability) => {
-        if (!suitability) return {};
-        if (suitability.toLowerCase().includes("uygun değil")) {
-            return { backgroundColor: '#ef9a9a' };
-        } else if (suitability.toLowerCase().includes("kısmen uygun")) {
-            return { backgroundColor: '#fff59d' };
-        } else if (suitability.toLowerCase().includes("uygun")) {
-            return { backgroundColor: 'lightgreen' };
-        }
-        return {};
-    };
-
-    const handleEdit = (id) => {
-        const item = results.find(i => i.id === id);
+    const handleEdit = (item) => {
         setEditingItem(item);
         setEditFields({
-            categoryId: item.categoryId || '',
-            categoryName: item.categoryName || '',
-            article: item.article || '',
-            suitability: item.suitability || '',
-            mobiComment: item.mobiComment || '',
-            specificationId: item.specificationId || '',
-            specificationName: item.specificationName || ''
+            categoryId: item.categoryId ? String(item.categoryId) : "",
+            article: item.article || "",
+            suitability: item.suitability || "",
+            mobiComment: item.mobiComment || "",
+            specificationId: item.specificationId || "",
         });
         setShowEditModal(true);
     };
 
-    // ARTİ BUTONU 
-    const handleAdd = (id) => {
-        const selected = results.find(item => item.id === id);
-        setSelectedRows((prev) => {
-            if (prev.some(row => row.id === id)) return prev;
-            return [...prev, selected];
-        });
-    };
-
-    // SAĞ ÜST ÖNİZLEME KAPAT
-    const handleRemoveSelected = (id) => {
-        setSelectedRows((prev) => prev.filter(row => row.id !== id));
-    };
-
-    // DÜZENLEME
-    const handleFieldChange = (e) => {
-        const { name, value } = e.target;
-        if (name === "categoryId") {
-            const selected = categoryOptions.find(opt => opt.value === value);
-            setEditFields(fields => ({
-                ...fields,
-                categoryId: value,
-                categoryName: selected ? selected.label : ""
-            }));
-        } else {
-            setEditFields(fields => ({
-                ...fields,
-                [name]: value
-            }));
-        }
-    };
-
-
     const handleSaveEdit = async () => {
-        try {
-            const token = localStorage.getItem("accessToken");
-            const payload = {
-                article: editFields.article,
-                suitability: editFields.suitability,
-                mobiComment: editFields.mobiComment,
-                specificationId: editFields.specificationId ? Number(editFields.specificationId) : null,
-                categoryId: editFields.categoryId ? Number(editFields.categoryId) : null
-            };
-            await axios.put(
-                `${API_BASE_URL}/api/v1/specification-items/${editingItem.id}`,
-                payload,
-                {
-                    headers: {
-                        "Authorization": `Bearer ${token}`,
-                        "Content-Type": "application/json"
+        const payload = {
+            article: editFields.article,
+            suitability: editFields.suitability,
+            mobiComment: editFields.mobiComment,
+            specificationId: editFields.specificationId ? Number(editFields.specificationId) : null,
+            categoryId: editFields.categoryId ? Number(editFields.categoryId) : null,
+        };
+
+        await axios.put(`${API_BASE_URL}/api/v1/specification-items/${editingItem.id}`, payload, {
+            headers: { ...authHeaders(), "Content-Type": "application/json" },
+        });
+
+        const category = categories.find((item) => String(item.id) === String(editFields.categoryId));
+        setItems((prev) =>
+            prev.map((item) =>
+                item.id === editingItem.id
+                    ? {
+                        ...item,
+                        ...payload,
+                        categoryName: category?.categoryName || item.categoryName,
+                        categoryId: payload.categoryId,
                     }
-                }
-            );
-            setResults((prevResults) =>
-                prevResults.map((item) =>
-                    item.id === editingItem.id
-                        ? { ...item, ...editFields }
-                        : item
-                )
-            );
-            setShowEditModal(false);
-        } catch (error) {
-            alert('Düzenleme hatası: ' + (error.response?.data || error.message));
-        }
+                    : item
+            )
+        );
+        setShowEditModal(false);
     };
 
+    const handleAdd = (item) => {
+        setSelectedRows((prev) => (prev.some((row) => row.id === item.id) ? prev : [...prev, item]));
+    };
 
-    // SADECE İNDİR 
+    const handleRemoveSelected = (id) => {
+        setSelectedRows((prev) => prev.filter((row) => row.id !== id));
+    };
+
     const handleDownloadOnly = async () => {
-        try {
-            const token = localStorage.getItem('accessToken');
-            const payload = {
-                selectedIds: selectedRows.map(row => row.id),
-                newSpecificationName: editFields.specificationName || ""
-            };
-
-
-            const response = await axios.post(
-                `${API_BASE_URL}/api/v1/specification-items/export-selected`,
-                payload,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    responseType: 'blob'
-                }
-            );
-
-
-            let filename = "export.xlsx";
-            const disposition = response.headers['content-disposition'];
-            if (disposition && disposition.indexOf('filename=') !== -1) {
-                filename = disposition.split('filename=')[1].replace(/["']/g, '');
-            } else if (editFields.specificationName) {
-                filename = editFields.specificationName.replace(/[^\w\d]/g, "_") + ".xlsx";
-            }
-
-
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', filename);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(url);
-
-            alert("İndirme tamamlandı!");
-        } catch (err) {
-            console.error("İndirme Hatası:", err);
-            alert('İndirme hatası: ' + (err.response?.data || err.message));
-        }
+        const response = await axios.post(
+            `${API_BASE_URL}/api/v1/specification-items/export-selected`,
+            { selectedIds: selectedRows.map((row) => row.id), newSpecificationName: exportName },
+            { headers: { ...authHeaders(), "Content-Type": "application/json" }, responseType: "blob" }
+        );
+        const filename = `${exportName || "export"}.xlsx`;
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", filename);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
     };
 
-
-
-    // SADECE KAYDET 
     const handleExportAndUpload = async () => {
-        try {
-            const token = localStorage.getItem('accessToken');
-            const payload = {
-                selectedIds: selectedRows.map(row => row.id),
-                newSpecificationName: editFields.specificationName
-            };
-            await axios.post(
-                `${API_BASE_URL}/api/v1/specification-items/duplicate-and-export`,
-                payload,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
-            alert("Başarıyla kaydedildi!");
-            setShowPreviewModal(false);
-        } catch (err) {
-            alert('Kayıt hatası: ' + (err.response?.data || err.message));
-        }
-    };
-
-
-
-    // İlk render'da ve keyword değiştiğinde textarea boyunu ayarla
-    React.useEffect(() => {
-        const ta = textareaRef.current;
-        if (ta) {
-            ta.style.height = "auto";
-            ta.style.height = ta.scrollHeight + "px";
-        }
-    }, [keyword]);
-
-    // Dili seçili olan objeden al
-    const t = searchTranslations[lang];
-
-    const handleCloseModal = () => {
+        await axios.post(
+            `${API_BASE_URL}/api/v1/specification-items/duplicate-and-export`,
+            { selectedIds: selectedRows.map((row) => row.id), newSpecificationName: exportName },
+            { headers: { ...authHeaders(), "Content-Type": "application/json" } }
+        );
         setShowPreviewModal(false);
-        setEditFields(fields => ({
-            ...fields,
-            specificationName: ""
-        }));
     };
-
 
     return (
-        <div className="search-root" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", position: "relative" }}>
-            <div className="search-header">
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <div className="search-root">
+            <header className="search-header">
+                <div className="search-brand">
                     <img src={logo} alt="Logo" className="search-logo" />
                     <span className="search-title">{t.portalTitle}</span>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <div className="search-header-actions">
                     {role === "ROLE_ADMIN" && (
-                        <button
-                            className="admin-button"
-                            style={{
-                                background: "#FF9F1C",
-                                color: "black",
-                                fontWeight: 600,
-                                borderRadius: 8,
-                                padding: "8px 18px",
-                                border: "none",
-                                cursor: "pointer",
-                                marginRight: 12,
-                                fontSize: "1rem"
-                            }}
-                            onClick={() => navigate("/admin")}
-                        >
+                        <button className="admin-button" onClick={() => navigate("/admin")}>
                             <FaUserShield /> Admin
                         </button>
                     )}
-                    <button className="lang-button" onClick={() => setLang(l => l === 'EN' ? 'TR' : 'EN')}>
+                    <button className="lang-button" onClick={() => setLang((value) => (value === "EN" ? "TR" : "EN"))}>
                         {lang}
                     </button>
-                    <button onClick={handleLogout} className="logout-button"><FaSignOutAlt /> {t.logout}</button>
+                    <button onClick={handleLogout} className="logout-button">
+                        <FaSignOutAlt /> {t.logout}
+                    </button>
                 </div>
-            </div>
+            </header>
 
-
-            {/* SAĞ ÜST ÖNİZLEME */}
-            {selectedRows.length > 0 && (
-                <div
-                    className="preview-chip"
-                    onClick={() => setShowPreviewModal(true)}
-                    title={t.detailsClick}
-                >
-                    <div className="preview-chip-header">
-                        <span className="preview-chip-title">{t.selected}</span>
-                        <span className="preview-chip-count">{selectedRows.length}</span>
-                        <span className="preview-chip-info">{t.detailsClick}</span>
+            <main className="workspace-shell">
+                <section className="workspace-toolbar">
+                    <div>
+                        <p className="workspace-eyebrow">{t.selected}: {selectedRows.length}</p>
+                        <h1>{t.portalTitle}</h1>
                     </div>
-                    <div className="preview-chip-table-header">
-                        <span>{t.category}</span>
-                        <span>{t.article}</span>
-                        <span style={{ minWidth: 26 }}></span>
+                    <div className="search-box">
+                        <FaSearch />
+                        <input
+                            value={keyword}
+                            onChange={(event) => setKeyword(event.target.value)}
+                            onKeyDown={(event) => {
+                                if (event.key === "Enter") setCurrentPage(1);
+                            }}
+                            placeholder={t.searchPlaceholder}
+                        />
                     </div>
-                    {selectedRows.slice(0, 4).map(row => (
-                        <div key={row.id} className="preview-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr 32px', alignItems: 'center' }}>
-                            <span className="preview-row-category" title={row.categoryName}>{row.categoryName}</span>
-                            <span className="preview-row-article" title={row.article}>{row.article}</span>
-                            <span
-                                className="preview-remove"
-                                onClick={e => {
-                                    e.stopPropagation();
-                                    handleRemoveSelected(row.id);
-                                }}
-                                title="Seçilenden çıkar"
-                                style={{ justifySelf: 'end' }}
-                            >×</span>
-                        </div>
-                    ))}
-                    {selectedRows.length > 4 && (
-                        <div className="preview-chip-more">
-                            +{selectedRows.length - 4} diğer...
-                        </div>
-                    )}
-                </div>
-            )}
+                </section>
 
-            {/* Textarea input */}
-            <div className="input-container" style={{ marginTop: "70px" }}>
-                <textarea
-                    ref={textareaRef}
-                    className="ask-input"
-                    placeholder={t.searchPlaceholder}
-                    value={keyword}
-                    onChange={handleKeywordChange}
-                    onKeyDown={e => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleClick();
-                        }
-                    }}
-                    rows={1}
-                    style={{
-                        overflow: 'hidden',
-                        minHeight: '80px',
-                        maxHeight: '2500px'
-                    }}
-                />
-            </div>
+                {selectedRows.length > 0 && (
+                    <section className="selection-strip">
+                        <span>{selectedRows.length} {t.selected}</span>
+                        <button onClick={() => setShowPreviewModal(true)}>{t.detailsClick}</button>
+                    </section>
+                )}
 
-            {results.length > 0 && (
-                <div className="result-table-container" style={{ flex: 1, overflowY: 'auto' }}>
-                    <table className="result-table">
-                        <thead>
-                            <tr>
-                                <th>{t.category}</th>
-                                <th>{t.article}</th>
-                                <th>{t.compatibility}</th>
-                                <th>{t.comment}</th>
-                                <th>{t.actions}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {results.map((item) => (
-                                <tr key={item.id}>
-                                    <td>{item.categoryName}</td>
-                                    <td>{item.article}</td>
-                                    <td style={getSuitabilityStyle(item.suitability)}>{item.suitability}</td>
-                                    <td>{item.mobiComment}</td>
-                                    <td>
-                                        <div style={{ display: 'flex', gap: '8px' }}>
-                                            <button onClick={() => handleEdit(item.id)} title={t.edit}><FaPen /></button>
-                                            <button onClick={() => handleAdd(item.id)} title={t.select}><FaPlus /></button>
+                <section className="article-panel">
+                    {loading ? (
+                        <div className="empty-state">{t.loading}</div>
+                    ) : (
+                        <>
+                            <div className="article-list">
+                                {paginatedItems.map((item) => (
+                                    <article className="article-card" key={item.id}>
+                                        <div className="article-card-main">
+                                            <div className="article-card-meta">
+                                                <span>{item.categoryName || "GENERAL"}</span>
+                                                <span>{item.specificationName}</span>
+                                                <span className={`status-pill ${getSuitabilityClass(item.suitability)}`}>
+                                                    {item.suitability || "-"}
+                                                </span>
+                                            </div>
+                                            <p className="article-text">{item.article}</p>
+                                            {item.mobiComment && <p className="article-comment">{item.mobiComment}</p>}
                                         </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
+                                        <div className="article-actions">
+                                            <button onClick={() => handleEdit(item)} title={t.edit}><FaEdit /></button>
+                                            <button onClick={() => handleAdd(item)} title={t.select}><FaPlus /></button>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
 
-            {/* Edit Modal */}
+                            <div className="pagination-bar">
+                                <span>{filteredItems.length} {t.articleCount}</span>
+                                <div>
+                                    {Array.from({ length: totalPages }, (_, index) => (
+                                        <button
+                                            key={index}
+                                            className={currentPage === index + 1 ? "active" : ""}
+                                            onClick={() => setCurrentPage(index + 1)}
+                                        >
+                                            {index + 1}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </section>
+            </main>
+
             {showEditModal && (
                 <>
                     <div className="modal-blur" onClick={() => setShowEditModal(false)} />
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                    <div className="modal-content edit-modal" onClick={(event) => event.stopPropagation()}>
                         <h2>{t.edit}</h2>
                         <label>
-                            Category:
+                            {t.category}
                             <select
                                 name="categoryId"
                                 value={editFields.categoryId}
-                                onChange={handleFieldChange}
-                                style={{ width: "90%", minHeight: 38, borderRadius: 8, marginBottom: 12 }}
+                                onChange={(event) => setEditFields((prev) => ({ ...prev, categoryId: event.target.value }))}
                             >
                                 <option value="">{t.select}</option>
-                                {categoryOptions.map(opt => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                {categories.map((category) => (
+                                    <option key={category.id} value={category.id}>{category.categoryName}</option>
                                 ))}
                             </select>
-
-
                         </label>
                         <label>
-                            {t.article}:
+                            {t.article}
                             <textarea
                                 name="article"
                                 value={editFields.article}
-                                onChange={handleFieldChange}
+                                onChange={(event) => setEditFields((prev) => ({ ...prev, article: event.target.value }))}
                                 rows={6}
-                                style={{
-                                    resize: 'vertical',
-                                    width: '90%',
-                                    minHeight: '90px',
-                                    fontSize: '1.08rem',
-                                    borderRadius: '9px',
-                                    border: '1px solid #e0e0e0',
-                                    background: '#f7f8fa',
-                                    padding: '16px 12px'
-                                }}
                             />
                         </label>
                         <label>
-                            {t.compatibility}:
+                            {t.compatibility}
                             <select
                                 name="suitability"
                                 value={editFields.suitability}
-                                onChange={handleFieldChange}
-                                style={{ width: "90%", minHeight: 38, borderRadius: 8, marginBottom: 12 }}
+                                onChange={(event) => setEditFields((prev) => ({ ...prev, suitability: event.target.value }))}
                             >
                                 <option value="">{t.select}</option>
                                 <option value="Uygun">Uygun</option>
@@ -475,22 +321,12 @@ function Search() {
                             </select>
                         </label>
                         <label>
-                            {t.comment}:
+                            {t.comment}
                             <textarea
                                 name="mobiComment"
                                 value={editFields.mobiComment}
-                                onChange={handleFieldChange}
+                                onChange={(event) => setEditFields((prev) => ({ ...prev, mobiComment: event.target.value }))}
                                 rows={3}
-                                style={{
-                                    resize: 'vertical',
-                                    width: '90%',
-                                    minHeight: '60px',
-                                    fontSize: '1.08rem',
-                                    borderRadius: '9px',
-                                    border: '1px solid #e0e0e0',
-                                    background: '#f7f8fa',
-                                    padding: '16px 12px'
-                                }}
                             />
                         </label>
                         <div className="modal-actions">
@@ -501,56 +337,33 @@ function Search() {
                 </>
             )}
 
-            {/* SEÇİLENLERİN DETAY MODALİ */}
             {showPreviewModal && (
                 <>
                     <div className="modal-blur" onClick={() => setShowPreviewModal(false)} />
-                    <div className="modal-content" style={{ minWidth: 600, maxHeight: 600, overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <h2 style={{ margin: 0 }}>{t.selected}</h2>
-                            <div className="modal-actions right" style={{ gap: 10 }}>
-                                <button onClick={handleCloseModal}>{t.close}</button>
-                                <button onClick={handleDownloadOnly} style={{ background: "#5e81ac", color: "#fff" }}>{t.download}</button>
-                                <button
-                                    onClick={handleExportAndUpload}
-                                    style={{ background: "#204181", color: "#fff" }}
-                                >
-                                    {t.export}
-                                </button>
-                            </div>
+                    <div className="modal-content export-modal" onClick={(event) => event.stopPropagation()}>
+                        <div className="modal-title-row">
+                            <h2>{t.selected}</h2>
+                            <button onClick={() => setShowPreviewModal(false)}><FaTimes /></button>
                         </div>
                         <input
                             className="specification-name-input"
-                            type="text"
+                            value={exportName}
+                            onChange={(event) => setExportName(event.target.value)}
                             placeholder={t.specificationName}
-                            value={editFields.specificationName || ""}
-                            onChange={e => setEditFields(fields => ({
-                                ...fields,
-                                specificationName: e.target.value
-                            }))}
                         />
-
-
-                        <table className="result-table" style={{ fontSize: 14 }}>
-                            <thead>
-                                <tr>
-                                    <th>{t.category}</th>
-                                    <th>{t.article}</th>
-                                    <th>{t.compatibility}</th>
-                                    <th>{t.comment}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {selectedRows.map(row => (
-                                    <tr key={row.id}>
-                                        <td>{row.categoryName}</td>
-                                        <td>{row.article}</td>
-                                        <td style={getSuitabilityStyle(row.suitability)}>{row.suitability}</td>
-                                        <td>{row.mobiComment}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                        <div className="selected-list">
+                            {selectedRows.map((row) => (
+                                <div className="selected-list-row" key={row.id}>
+                                    <span>{row.categoryName}</span>
+                                    <p>{row.article}</p>
+                                    <button onClick={() => handleRemoveSelected(row.id)}><FaTimes /></button>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="modal-actions">
+                            <button onClick={handleDownloadOnly}><FaDownload /> {t.download}</button>
+                            <button onClick={handleExportAndUpload}>{t.export}</button>
+                        </div>
                     </div>
                 </>
             )}

@@ -6,5 +6,7 @@ public record SpecificationItemResponse(
         String suitability,
         String mobiComment,
         String specificationName,
-        String categoryName
+        String categoryName,
+        Long specificationId,
+        Long categoryId
 ) {}

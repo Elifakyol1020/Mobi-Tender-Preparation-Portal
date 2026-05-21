@@ -69,6 +69,8 @@ export const searchTranslations = {
     edit: "Edit",
     download: "Download",
     select: "Select",
+    articleCount: "article",
+    loading: "Loading...",
   },
   TR: {
     portalTitle: "Tender Preparation Portal",
@@ -91,6 +93,8 @@ export const searchTranslations = {
     edit: "Düzenle",
     download: "İndir",
     select: "Seçiniz",
+    articleCount: "madde",
+    loading: "Yükleniyor...",
   },
 };
 

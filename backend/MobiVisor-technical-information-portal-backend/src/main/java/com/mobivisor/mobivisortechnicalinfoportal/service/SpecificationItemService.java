@@ -78,6 +78,14 @@ public class SpecificationItemService {
         return specs;
     }
 
+    public List<SpecificationItemResponse> getAllItems() {
+        logger.info("Tüm specification item verileri getiriliyor");
+        return specificationItemRepository.findAll()
+                .stream()
+                .map(this::convertToResponse)
+                .toList();
+    }
+
     public List<SpecificationItemResponse> getBySpecificationId(Long specificationId) {
         logger.info("SpecificationId'ye göre veriler getiriliyor - specificationId: {}", specificationId);
         Optional<Specification> specificationOpt = specificationRepository.findById(specificationId);
@@ -411,7 +419,9 @@ public class SpecificationItemService {
                 item.getSuitability(),
                 item.getMobiComment(),
                 item.getSpecification().getSpecificationName(),
-                item.getCategory() != null ? item.getCategory().getCategoryName() : "GENERAL"
+                item.getCategory() != null ? item.getCategory().getCategoryName() : "GENERAL",
+                item.getSpecification() != null ? item.getSpecification().getId() : null,
+                item.getCategory() != null ? item.getCategory().getId() : null
         );
     }
 }

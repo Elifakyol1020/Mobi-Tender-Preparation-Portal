@@ -33,6 +33,13 @@ public class SpecificationItemController {
         this.specificationItemService = specificationItemService;
     }
 
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<List<SpecificationItemResponse>> getAllItems() {
+        logger.info("Tüm SpecificationItem listesi isteniyor");
+        return ResponseEntity.ok(specificationItemService.getAllItems());
+    }
+
     // Bu method, Excel dosyasını yükler ve içeriğini işler.
     @PostMapping(value = "/upload", consumes = "multipart/form-data")
     @PreAuthorize("hasRole('ADMIN')")

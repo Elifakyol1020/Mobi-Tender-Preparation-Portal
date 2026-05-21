@@ -3,7 +3,7 @@ import axios from "axios";
 import logo from "../image/logo.png";
 import "../css/Admin.css";
 import { useNavigate } from "react-router-dom";
-import { FaClipboardList, FaDownload, FaEdit, FaFileAlt, FaFolderOpen, FaPlus, FaSearch, FaSignOutAlt, FaTrash, FaUpload, FaUser, FaUsers } from "react-icons/fa";
+import { FaClipboardList, FaDownload, FaEdit, FaFileAlt, FaFolderOpen, FaPlus, FaSignOutAlt, FaTrash, FaUpload, FaUser, FaUsers } from "react-icons/fa";
 import { API_BASE_URL } from "../config/env";
 import { adminTranslations } from "../constants/i18n";
 
@@ -23,6 +23,7 @@ function Admin() {
   const t = adminTranslations[lang];
 
   const [users, setUsers] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [userError, setUserError] = useState(null);
 
@@ -54,6 +55,8 @@ function Admin() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [detailsPage, setDetailsPage] = useState(1);
+  const [usersPage, setUsersPage] = useState(1);
+  const [logsPage, setLogsPage] = useState(1);
   const [detailSearch, setDetailSearch] = useState("");
   const [lastElasticSearch, setLastElasticSearch] = useState("");
 
@@ -78,11 +81,9 @@ function Admin() {
   const fetchSpecNames = async () => {
     try {
       const token = localStorage.getItem("accessToken");
-      console.log(token);
       const response = await axios.get(`${API_URL}/api/v1/specifications/with-item-count`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log("Fetched spec names:", response.data);
       setSpecNames(response.data || []);
       setCurrentPage(1);
     } catch (error) {
@@ -93,7 +94,20 @@ function Admin() {
 
   useEffect(() => {
     fetchSpecNames();
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await axios.get(`${API_URL}/api/categories`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setCategories(response.data || []);
+    } catch (error) {
+      setCategories([]);
+    }
+  };
 
   const handleSpecClick = async (id, specificationName) => {
     setSelectedSpecName(specificationName);
@@ -351,10 +365,10 @@ function Admin() {
     }
   };
 
-const clearElastic = () => {
+  const clearElastic = () => {
     setLastElasticSearch("");
     setDetailSearch("");
-  };
+  };
 
   useEffect(() => {
     if (activeTab === "users") {
@@ -481,13 +495,10 @@ const clearElastic = () => {
     }
   };
 
-  const categoryOptions = [
-    { value: "1", label: t.general },
-    { value: "2", label: t.security },
-    { value: "3", label: t.management },
-    { value: "4", label: t.use },
-    { value: "5", label: t.reporting },
-  ];
+  const categoryOptions = categories.map((category) => ({
+    value: String(category.id),
+    label: category.categoryName,
+  }));
 
   const handleDeleteSpec = async (id, specificationName) => {
     if (!window.confirm(`"${specificationName}" ${t.deleteSpecConfirm}?`)) return;
@@ -610,47 +621,28 @@ const clearElastic = () => {
     setLoadingLogs(false);
   };
 
+  const totalUsersPages = Math.max(1, Math.ceil(users.length / PAGE_SIZE));
+  const paginatedUsers = users.slice((usersPage - 1) * PAGE_SIZE, usersPage * PAGE_SIZE);
+  const totalLogsPages = Math.max(1, Math.ceil(logs.length / PAGE_SIZE));
+  const paginatedLogs = logs.slice((logsPage - 1) * PAGE_SIZE, logsPage * PAGE_SIZE);
+
   // --- RENDER ---
   return (
     <div className="admin-root">
-      <header className="admin-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div className="admin-logo-title" style={{ display: "flex", alignItems: "center" }}>
+      <header className="admin-header">
+        <div className="admin-logo-title">
           <img src={logo} alt="Logo" className="admin-logo" />
-          <span className="admin-title" style={{ marginRight: 18 }}>
-            {t.adminTitle}
-          </span>
+          <span className="admin-title">{t.adminTitle}</span>
         </div>
-        <div style={{ display: "flex", alignItems: "center" }}>
+        <div className="admin-header-actions">
           <button
             className="admin-search-button"
-            style={{
-              padding: "8px 18px",
-              background: "#FF9F1C",
-              border: "none",
-              borderRadius: "8px",
-              color: "black",
-              fontWeight: 600,
-              fontSize: "1em",
-              marginRight: 15,
-              cursor: "pointer"
-            }}
             onClick={() => navigate("/user/search")}
           >
             {t.search}
           </button>
           <button
             className="admin-lang-button"
-            style={{
-              padding: "7px 18px",
-              background: "#204181",
-              border: "none",
-              borderRadius: "8px",
-              color: "white",
-              fontWeight: 600,
-              fontSize: "1em",
-              marginRight: 15,
-              cursor: "pointer"
-            }}
             onClick={() => setLang(lang === "EN" ? "TR" : "EN")}
           >
             {lang}
@@ -662,70 +654,24 @@ const clearElastic = () => {
       </header>
 
 
-      <div className="admin-tab-row" style={{
-        display: "flex",
-        borderBottom: "2px solid #e3e3e3",
-        marginBottom: 24,
-        gap: 15,
-        background: "#fff",
-        marginTop: 15,
-      }}>
+      <div className="admin-tab-row">
         <button
           className={`admin-tab-btn${activeTab === "specifications" ? " active" : ""}`}
           onClick={() => setActiveTab("specifications")}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "12px 28px",
-            border: "none",
-            borderBottom: activeTab === "specifications" ? "4px solid #4660e4" : "4px solid transparent",
-            background: "none",
-            fontWeight: 700,
-            fontSize: "1.1em",
-            color: activeTab === "specifications" ? "#4660e4" : "#626678",
-            cursor: "pointer"
-          }}
         >
-          <FaFileAlt style={{ fontSize: "1.1em" }} /> {t.specifications}
+          <FaFileAlt /> {t.specifications}
         </button>
         <button
           className={`admin-tab-btn${activeTab === "users" ? " active" : ""}`}
           onClick={() => setActiveTab("users")}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "12px 28px",
-            border: "none",
-            borderBottom: activeTab === "users" ? "4px solid #4660e4" : "4px solid transparent",
-            background: "none",
-            fontWeight: 700,
-            fontSize: "1.1em",
-            color: activeTab === "users" ? "#4660e4" : "#626678",
-            cursor: "pointer"
-          }}
         >
-          <FaUsers style={{ fontSize: "1.1em" }} /> {t.users}
+          <FaUsers /> {t.users}
         </button>
         <button
           className={`admin-tab-btn${activeTab === "logs" ? " active" : ""}`}
           onClick={() => setActiveTab("logs")}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "12px 28px",
-            border: "none",
-            borderBottom: activeTab === "logs" ? "4px solid #4660e4" : "4px solid transparent",
-            background: "none",
-            fontWeight: 700,
-            fontSize: "1.1em",
-            color: activeTab === "logs" ? "#4660e4" : "#626678",
-            cursor: "pointer"
-          }}
         >
-          <FaClipboardList style={{ fontSize: "1.1em" }} /> Logs
+          <FaClipboardList /> Logs
         </button>
 
       </div>
@@ -946,147 +892,121 @@ const clearElastic = () => {
           </>
         )}
         {activeTab === "users" && (
-          <div
-            style={{
-              minHeight: 300,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-start",
-              justifyContent: users.length === 0 ? "center" : "flex-start",
-              color: "#4660e4",
-              fontSize: "1.1em",
-              fontWeight: 500,
-              width: "100%",
-              paddingLeft: 60,
-              fontFamily: "Inter, sans-serif",
-            }}
-          >
-
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 30,
-                width: "90%",
-                maxWidth: "calc(100% - 60px)",
-              }}
-            >
-              <h2
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  margin: 0,
-                  fontSize: "1.4em",
-                  fontWeight: 700,
-                  color: "#4660e4",
-                }}
-              >
+          <section className="admin-section">
+            <div className="admin-section-header">
+              <h2>
                 <FaUsers /> {t.users}
               </h2>
-              <button
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "7px 24px",
-                  borderRadius: 8,
-                  background: "#4660e4",
-                  color: "#fff",
-                  border: "none",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  fontSize: "1em",
-                  boxShadow: "0 1px 5px #e6e7f1",
-                  transition: "background 0.18s",
-                  marginLeft: "auto"
-                }}
-                onClick={() => setShowUserAddModal(true)}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
+              <button className="primary-action" onClick={() => setShowUserAddModal(true)}>
+                <FaPlus />
                 {t.add}
               </button>
             </div>
             {loadingUsers && <div>{t.loading}</div>}
-            {userError && <div style={{ color: "red" }}>{userError}</div>}
+            {userError && <div className="admin-error">{userError}</div>}
             {!loadingUsers && users.length === 0 && !userError && (
-              <div style={{ color: "#999" }}>{t.noUsers}</div>
+              <div className="admin-empty">{t.noUsers}</div>
             )}
             {!loadingUsers && users.length > 0 && (
-              <ul
-                style={{
-                  width: 650,
-                  padding: 0,
-                  margin: 0,
-                  listStyle: "none",
-                  borderRadius: 12,
-                  background: "#f6f8fc",
-                  boxShadow: "0 2px 12px #e6e7f1",
-                  border: "1px solid #e5e7eb",
-                }}
-              >
-                {users.map((user) => (
-                  <li
-                    key={user.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 30,
-                      padding: "15px 22px",
-                      borderBottom: "1px solid #e6e7f1",
-                      fontSize: "0.9em",
-                    }}
-                  >
-                    <FaUser style={{ color: "#4660e4", fontSize: "1.2em" }} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ color: "#000134", fontWeight: 700 }}>
+              <ul className="user-list">
+                {paginatedUsers.map((user) => (
+                  <li key={user.id}>
+                    <span className="user-avatar"><FaUser /></span>
+                    <div className="user-card-body">
+                      <div>
                         {t.email} : {user.email}
                       </div>
-                      <div style={{ color: "#000134", fontSize: "0.95em", marginTop: 2 }}>
+                      <div>
                         {t.username} : {user.userName || user.username}
                       </div>
-                      <div style={{ color: "#000134", fontSize: "0.95em", marginTop: 2 }}>
+                      <div>
                         {t.role} : {user.role}
                       </div>
                     </div>
-                    <button
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                        padding: "5px 16px",
-                        borderRadius: 8,
-                        background: "#e6ebff",
-                        color: "#4660e4",
-                        border: "none",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        fontSize: "0.95em",
-                        transition: "background 0.18s",
-                      }}
-                      onClick={() => handleEditUser(user)}
-                    >
+                    <button className="action-button edit" onClick={() => handleEditUser(user)} title={t.edit}>
                       <FaEdit />
                     </button>
                   </li>
                 ))}
               </ul>
             )}
-          </div>
+            {users.length > PAGE_SIZE && (
+              <div className="admin-pagination">
+                {Array.from({ length: totalUsersPages }, (_, i) => (
+                  <button
+                    key={i}
+                    className={usersPage === i + 1 ? "active" : ""}
+                    onClick={() => setUsersPage(i + 1)}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+        {activeTab === "logs" && (
+          <section className="admin-section">
+            <div className="admin-section-header">
+              <h2>
+                <FaClipboardList /> {t.authenticationLogs}
+              </h2>
+              <button
+                className="danger-action"
+                onClick={handleClearLogs}
+                disabled={loadingLogs || logs.length === 0}
+              >
+                {t.clearLogs}
+              </button>
+            </div>
+
+            {loadingLogs && <div>{t.loading}</div>}
+            {logError && <div className="admin-error">{logError}</div>}
+            {!loadingLogs && logs.length === 0 && !logError && (
+              <div className="admin-empty">{t.noLogs}</div>
+            )}
+            {!loadingLogs && logs.length > 0 && (
+              <>
+                <div className="table-scroll">
+                  <table className="admin-data-table">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>{t.user}</th>
+                        <th>{t.role}</th>
+                        <th>{t.dt}</th>
+                        <th>IP</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginatedLogs.map(log => (
+                        <tr key={log.id}>
+                          <td>{log.id}</td>
+                          <td>{log.username}</td>
+                          <td>{log.role?.replace("ROLE_", "")}</td>
+                          <td>{formatDate(log.loginTime)}</td>
+                          <td>{log.ipAddress}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {logs.length > PAGE_SIZE && (
+                  <div className="admin-pagination">
+                    {Array.from({ length: totalLogsPages }, (_, i) => (
+                      <button
+                        key={i}
+                        className={logsPage === i + 1 ? "active" : ""}
+                        onClick={() => setLogsPage(i + 1)}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </section>
         )}
       </main>
 
@@ -1320,111 +1240,6 @@ const clearElastic = () => {
             </div>
           </div>
         </>
-      )}
-
-      {activeTab === "logs" && (
-        <div
-          style={{
-            minHeight: 1500,
-            width: "95%",
-            paddingLeft: 80,
-            fontFamily: "Inter, sans-serif",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-start",
-            justifyContent: "flex-start",
-            position: "relative"
-          }}
-        >
-          <div style={{
-            width: "95%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            position: "sticky",
-            top: 0,
-            left: 0,
-            background: "white",
-            zIndex: 2,
-            height: 48,
-          }}>
-            <h2
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                margin: 0,
-                fontSize: "1.4em",
-                fontWeight: 700,
-                color: "#4660e4",
-              }}
-            >
-              <FaClipboardList /> {t.authenticationLogs}
-            </h2>
-            <button
-              onClick={handleClearLogs}
-              disabled={loadingLogs || logs.length === 0}
-              style={{
-                padding: "8px 22px",
-                marginRight: 20,
-                background: "#c62828",
-                color: "#fff",
-                fontWeight: 700,
-                fontSize: "1em",
-                border: "none",
-                borderRadius: 8,
-                cursor: loadingLogs || logs.length === 0 ? "not-allowed" : "pointer",
-                opacity: loadingLogs || logs.length === 0 ? 0.5 : 1,
-                transition: "opacity 0.18s"
-              }}
-            >
-              {t.clearLogs}
-            </button>
-          </div>
-
-          <div style={{ width: "100%", marginTop: 40 ,marginLeft: 20 }}>
-            {loadingLogs && <div>{t.loading}</div>}
-            {logError && <div style={{ color: "red" }}>{logError}</div>}
-            {!loadingLogs && logs.length === 0 && !logError && (
-              <div style={{ color: "#999" }}>{t.noLogs}</div>
-            )}
-            {!loadingLogs && logs.length > 0 && (
-              <div style={{ width: "90%", overflowX: "auto" }}>
-                <table
-                  style={{
-                    background: "#f6f8fc",
-                    borderRadius: 10,
-                    padding: 12,
-                    width: "100%",
-                    border: "1px solid #e5e7eb",
-                    minWidth: 640
-                  }}
-                >
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign: "left", padding: "8px" }}>ID</th>
-                      <th style={{ textAlign: "left", padding: "8px" }}>{t.user}</th>
-                      <th style={{ textAlign: "left", padding: "8px" }}>{t.role}</th>
-                      <th style={{ textAlign: "left", padding: "8px" }}>{t.dt}</th>
-                      <th style={{ textAlign: "left", padding: "8px" }}>IP</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {logs.map(log => (
-                      <tr key={log.id}>
-                        <td style={{ padding: "6px 8px" }}>{log.id}</td>
-                        <td style={{ padding: "6px 8px" }}>{log.username}</td>
-                        <td style={{ padding: "6px 8px" }}>{log.role?.replace("ROLE_", "")}</td>
-                        <td style={{ padding: "6px 8px" }}>{formatDate(log.loginTime)}</td>
-                        <td style={{ padding: "6px 8px" }}>{log.ipAddress}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
       )}
     </div>
   );
