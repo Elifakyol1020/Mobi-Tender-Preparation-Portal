@@ -1,5 +1,5 @@
 import { jwtDecode } from "jwt-decode";
-import { createContext, useState, useEffect, useContext } from "react";
+import { createContext, useCallback, useState, useEffect, useContext } from "react";
 import { clearSession } from "../api/authClient";
 
 export const AuthContext = createContext();
@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
 
-  const loadUserFromToken = async () => {
+  const loadUserFromToken = useCallback(async () => {
     const token = localStorage.getItem("accessToken");
     if (token) {
       try {
@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
       clearSession();
     }
     setLoading(false);
-  };
+  }, []);
 
   const logout = () => {
     clearSession();
@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     loadUserFromToken();
-  }, []);
+  }, [loadUserFromToken]);
 
   return (
     <AuthContext.Provider

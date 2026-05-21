@@ -4,6 +4,7 @@ import { jwtDecode } from "jwt-decode";
 import Header from "../component/Header";
 import "../css/Home.css";
 import { clearSession, storeAuthTokens } from "../api/authClient";
+import { useAuth } from "../context/AuthContext";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -44,18 +45,25 @@ function Home() {
   const [form, setForm] = useState({ email: "", username: "", password: "" });
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const { loadUserFromToken } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
+    let active = true;
     const accessToken = localStorage.getItem("accessToken");
     if (accessToken) {
-      try {
-        redirectByRole(accessToken);
-      } catch (error) {
-        clearSession();
-      }
+      loadUserFromToken()
+        .then(() => {
+          if (active) redirectByRole(accessToken);
+        })
+        .catch(() => {
+          clearSession();
+        });
     }
-  }, [navigate]);
+    return () => {
+      active = false;
+    };
+  }, [navigate, loadUserFromToken]);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -110,6 +118,7 @@ function Home() {
 
       const data = await response.json();
       storeAuthTokens(data);
+      await loadUserFromToken();
       redirectByRole(data.accessToken);
     } catch (err) {
       setError(err.message || t.error);
